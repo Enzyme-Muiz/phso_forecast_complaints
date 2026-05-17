@@ -1,0 +1,16 @@
+[project]
+name = "phso-forecast-complaints"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "holidays>=0.96",
+    "ipykernel>=7.2.0",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.5",
+    "openpyxl>=3.1.5",
+    "optuna>=4.8.0",
+    "pandas>=3.0.3",
+    "scikit-learn>=1.8.0",
+]
