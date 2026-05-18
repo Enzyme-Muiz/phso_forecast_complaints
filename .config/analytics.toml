@@ -1,0 +1,44 @@
+"SEED" = 24434
+
+"impute_cols" = [
+        "staffing_level_fte",
+        "channel_mix_index",
+        "backlog_days"
+    ]
+
+"impute_predictor_cols" = [
+    "recovered_complaints",
+    "media_mentions",
+    "staffing_level_fte",
+    "channel_mix_index",
+    "backlog_days"
+]
+
+"max_iter_iterative_imputer" = 100
+
+"columns_for_viz" =[
+    #"complaints",
+    "media_mentions",
+    # "backlog_days",
+    # "staffing_level_fte",
+    #"centered_7d_mean"
+]
+
+"forecast_predictor_cols" = [
+    "recovered_complaints",
+    "media_mentions",
+    "staffing_level_fte",
+    "channel_mix_index",
+    "backlog_days"
+]
+
+"imputer_trial_count" = 20
+
+
+"model_names" = [
+        "ridge",
+        "random_forest",
+        "hist_gradient_boosting"
+    ]
+
+"forecast_horizon" = 90

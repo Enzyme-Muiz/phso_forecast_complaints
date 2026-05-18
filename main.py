@@ -5,6 +5,11 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from src.utils.logging_config import setup_logger
 from src.utils.config_loader import load_config
+from src.validation import validate_data
+from src.recover_missing_complaints import recover_missing_complaints
+from src.iterative_imputer import impute_missing_values
+from src.visualizations import plot_time_series, plot_forecast
+from src.model_training import forecast_recovered_complaints_90_days
 
 ###### Set up logger
 import sys
@@ -16,48 +21,161 @@ from src.utils.logging_config import setup_logger
 logger = setup_logger(__name__, base_filename="pipeline")
 
 logger.info("Started run")
-logger.error("Failure occurred")
+
 
 # logging = setup_logging()
 
 
 ### Load config
+logger.info("Loading config")
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from src.utils.config_loader import load_config
 
-config = load_config()
+config = load_config(".config/analytics.toml")
 print(config)
+SEED = config["SEED"]
+
+logger.info(f"Config loaded successfully as {config}")
 
 
-### Load env variables
-import sys
-from pathlib import Path
+### load libaries
+logger.info("Loading libraries")
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-from src.utils.env_loader import load_env_from_root
+# Enable IterativeImputer
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+import numpy as np
+import pandas as pd
+import holidays
+import optuna
+import joblib
 
-env_path = load_env_from_root()
-print(f"Loaded env variables from: {env_path}")
-##import os
-##os.getenv("YOUR_ENV_VAR")
+from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
+from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.model_selection import TimeSeriesSplit
 
-### Example usage of SQLCRUD
-import sys
-from pathlib import Path
+logger.info("Libraries loaded successfully")
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-from src.sqlcrud import SQLServerCRUD
 
-connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=your_server;DATABASE=your_db;UID=your_user;PWD=your_password"
-sql_crud = SQLServerCRUD(connection_string)
-sql_crud.connect()
-sql_crud.build_query("sql/query.sql", params={"param1": "value1"})
-df = sql_crud.read_data()
-print(df)
-sql_crud.close_connection()
+## loading data
+logger.info("Loading data")
+df1 = pd.read_excel(
+    "data/inputs/Principle_Data_Scientist_Tech_Assessment.xlsx",
+    sheet_name="daily records",
+)
+logger.info("Data loaded successfully")
+
+
+# Validate the loaded data
+logger.info("Validating data")
+validation_errors = validate_data(df1)
+for error_type, df in validation_errors.items():
+    if not df.empty:
+        logger.warning(
+            f"Found {len(df)} rows with {error_type.replace('_', ' ').title()}"
+        )
+    else:
+        logger.info(f"No issues found for {error_type.replace('_', ' ').title()}")
+
+
+## missing data points
+logger.info("Checking for missing data points")
+# Count NaN values in each column
+nan_counts = df1.isna().sum()
+
+print(nan_counts)
+logger.info(
+    f"Missing data points checked successfully and the counts are printed above as {nan_counts}"
+)
+
+
+## Imputation
+logger.info("Starting imputation of missing data points")
+df1 = recover_missing_complaints(df1)
+
+recovered_aspect = df1[df1["complaints"].isna()][
+    ["date", "complaints", "recovered_complaints", "centered_7d_mean"]
+]
+logger.info(f"Recovered complaints for missing data points:\n{recovered_aspect}")
+
+df1_imputed, imputer = impute_missing_values(
+    df1, seed=SEED, max_iter=config["max_iter_iterative_imputer"]
+)
+
+
+# Save imputer model
+joblib.dump(imputer, "model/iterative_imputer.pkl")
+
+print("Model saved successfully.")
+
+logger.info("Imputation completed successfully")
+
+
+### visualization
+logger.info("Starting visualization of time series data")
+plot_time_series(df1_imputed, date_col="date", columns=config["columns_for_viz"])
+logger.info("Visualization completed successfully")
+
+
+## forecasting
+logger.info("Starting model training and forecasting")
+forecast_90d, model_info, best_model = forecast_recovered_complaints_90_days(
+    df1_imputed, horizon=90
+)
+
+
+###visualize forecast
+logger.info("Visualizing forecast vs historical data")
+plot_forecast(
+    historical_df=df1_imputed,
+    forecast_df=forecast_90d,
+    historical_col="recovered_complaints",
+    forecast_col="forecast_recovered_complaints",
+    title="90-Day Forecast of Recovered Complaints",
+)
+logger.info("Forecast visualization completed successfully")
+
+
+# Save best model
+joblib.dump(best_model, "model/best_model.pkl")
+
+
+logger.info("Best model saved successfully")
+
+
+# ### Load env variables
+# import sys
+# from pathlib import Path
+
+# sys.path.append(str(Path(__file__).resolve().parents[1]))
+# from src.utils.env_loader import load_env_from_root
+
+# env_path = load_env_from_root()
+# print(f"Loaded env variables from: {env_path}")
+# ##import os
+# ##os.getenv("YOUR_ENV_VAR")
+
+# ### Example usage of SQLCRUD
+# import sys
+# from pathlib import Path
+
+# sys.path.append(str(Path(__file__).resolve().parents[1]))
+# from src.sqlcrud import SQLServerCRUD
+
+# connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=your_server;DATABASE=your_db;UID=your_user;PWD=your_password"
+# sql_crud = SQLServerCRUD(connection_string)
+# sql_crud.connect()
+# sql_crud.build_query("sql/query.sql", params={"param1": "value1"})
+# df = sql_crud.read_data()
+# print(df)
+# sql_crud.close_connection()
 
 
 # uv  add ipykernel
