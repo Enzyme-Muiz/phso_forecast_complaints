@@ -37,6 +37,7 @@ from src.utils.config_loader import load_config
 config = load_config(".config/analytics.toml")
 print(config)
 SEED = config["SEED"]
+forecast_horizon = config["forecast_horizon"]
 
 logger.info(f"Config loaded successfully as {config}")
 
@@ -127,19 +128,20 @@ logger.info("Visualization completed successfully")
 ## forecasting
 logger.info("Starting model training and forecasting")
 forecast_90d, model_info, best_model = forecast_recovered_complaints_90_days(
-    df1_imputed, horizon=90
+    df1_imputed, horizon=forecast_horizon
 )
 
 
 ###visualize forecast
 logger.info("Visualizing forecast vs historical data")
-plot_forecast(
+result = plot_forecast(
     historical_df=df1_imputed,
     forecast_df=forecast_90d,
     historical_col="recovered_complaints",
-    forecast_col="forecast_recovered_complaints",
-    title="90-Day Forecast of Recovered Complaints",
+    forecast_col=f"forecast_recovered_complaints",
+    title=f"{forecast_horizon}-Day Forecast of Recovered Complaints",
 )
+result.savefig("results/forecast_vs_historical.png")
 logger.info("Forecast visualization completed successfully")
 
 

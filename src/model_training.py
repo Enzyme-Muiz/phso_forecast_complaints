@@ -47,7 +47,10 @@ def add_date_features(df):
     uk_holidays = holidays.UK(years=years)
 
     df["is_weekend"] = df["date"].dt.dayofweek.isin([5, 6]).astype(int)
-    df["bank_holiday_flag"] = df["date"].isin(uk_holidays).astype(int)
+
+    df["bank_holiday_flag"] = (
+        df["date"].dt.normalize().isin(pd.to_datetime(list(uk_holidays.keys())))
+    ).astype(int)
 
     df["dayofweek"] = df["date"].dt.dayofweek
     df["month"] = df["date"].dt.month
@@ -134,7 +137,9 @@ def tune_model(X, y, model_name, seed=SEED, n_trials=imputer_trial_count):
 # -----------------------------
 # Forecast one column recursively
 # -----------------------------
-def forecast_column(df, target_col, models=model_names, forecast_horizon=90):
+def forecast_column(
+    df, target_col, models=model_names, forecast_horizon=forecast_horizon
+):
     df = add_date_features(df)
 
     df_model = create_lag_features(df, target_col)
@@ -214,7 +219,7 @@ def forecast_column(df, target_col, models=model_names, forecast_horizon=90):
 
 def forecast_recovered_complaints_90_days(
     df,
-    horizon=90,
+    horizon=forecast_horizon,
     exog_cols=[
         "staffing_level_fte",
         "channel_mix_index",
@@ -301,7 +306,7 @@ def forecast_recovered_complaints_90_days(
     # Training set
     # -----------------------------------
     train_df = full_df[full_df[target_col].notna()].dropna()
-
+    train_df.to_csv("data/outputs/train_df.csv", index=False)
     X = train_df[feature_cols]
     y = train_df[target_col]
 

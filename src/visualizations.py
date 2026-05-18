@@ -53,64 +53,37 @@ def plot_forecast(
     figsize=(12, 6),
     title="Forecast vs Historical",
 ):
-    """
-    Plot historical and forecasted time series.
 
-    Parameters
-    ----------
-    historical_df : pd.DataFrame
-        Historical dataframe
-
-    forecast_df : pd.DataFrame
-        Forecast dataframe
-
-    date_col : str
-        Date column name
-
-    historical_col : str
-        Historical target column
-
-    forecast_col : str
-        Forecast target column
-
-    figsize : tuple
-        Figure size
-
-    title : str
-        Plot title
-    """
-
-    plt.figure(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize)
 
     # Historical data
-    plt.plot(
+    ax.plot(
         historical_df[date_col],
         historical_df[historical_col],
         label=f"Historical {historical_col}",
     )
 
     # Forecast data
-    plt.plot(
+    ax.plot(
         forecast_df[date_col],
         forecast_df[forecast_col],
         label=f"Forecast {historical_col}",
     )
 
     # Labels
-    plt.xlabel("Date")
-    plt.ylabel(historical_col)
+    ax.set_xlabel("Date")
+    ax.set_ylabel(historical_col)
 
     # Title
-    plt.title(title)
+    ax.set_title(title)
 
     # Legend
-    plt.legend()
+    ax.legend()
 
     # Rotate dates
     plt.xticks(rotation=45)
 
     # Layout
     plt.tight_layout()
-
-    # Show plot
     plt.show()
+    return fig
