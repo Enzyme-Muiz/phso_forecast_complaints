@@ -1,23 +1,96 @@
-## HOW TO RUN THE CODE
-1. git clone https://github.com/Enzyme-Muiz/phso_forecast_complaints.git
-2. pip install uv
-3. uv run main.py
+## Running the Project
 
-## WHAT DOES THE main.py DO?
+### Clone the Repository
 
+```bash
+git clone https://github.com/Enzyme-Muiz/phso_forecast_complaints.git
+cd phso_forecast_complaints
+```
 
+---
 
+## Install Dependencies
 
+This project uses uv for dependency management and environment handling.
 
-## HOW TO RUN THE dev.ipynb NOTEBOOK
+Install `uv` if you do not already have it:
+
+```bash
+pip install uv
+```
+
+Then install the project dependencies:
+
+```bash
+uv sync
+```
+
+---
+
+## Run the Forecasting Pipeline
+
+To run the full forecasting pipeline:
+
+```bash
+uv run main.py
+```
+
+### What does `main.py` do?
+
+The `main.py` script:
+
+* loads the project configuration from `.config/analytics.toml`
+* prepares the dataset
+* creates date and lag-based forecasting features
+* tunes multiple machine learning models using Optuna
+* selects the best-performing model
+* forecasts exogenous variables recursively
+* generates future complaint forecasts
+* saves outputs and trained models
+
+---
+
+## Running the Development Notebook
+
+The `dev.ipynb` notebook was used during experimentation and model development. It is **not required** for the production forecasting pipeline.
+
+If you would still like to run the notebook using the same virtual environment managed by `uv`, run:
+
+```bash
+uv add ipykernel
+uv run -m ipykernel install --user --name=.venv --display-name "Python (forecast_env)"
+```
+
+Then open Jupyter Notebook or VS Code and select:
+
+```text
+Python (forecast_env)
+```
+
+as the notebook kernel.
+
+---
+
+## MLflow Tracking UI
+
+If MLflow tracking is enabled in `.config/analytics.toml`, you can visualize experiment runs locally using:
+
+```bash
+uv run mlflow ui --backend-store-uri "file:///${PWD}/mlflowresult"
+```
+
+Then open the MLflow UI in your browser, typically at:
+
+```text
+http://127.0.0.1:5000
+```
+
 
 
 
 
 
 ## EXPLANATION OF THE main.py
-
-
 ````markdown
 ## Forecasting Approach
 

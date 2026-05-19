@@ -38,6 +38,7 @@ config = load_config(".config/analytics.toml")
 print(config)
 SEED = config["SEED"]
 forecast_horizon = config["forecast_horizon"]
+mlflowlog = config["mlflowlog"]
 
 logger.info(f"Config loaded successfully as {config}")
 
@@ -64,6 +65,18 @@ from sklearn.model_selection import TimeSeriesSplit
 
 logger.info("Libraries loaded successfully")
 
+
+####mlflow setup
+if mlflowlog:
+    import os
+    import mlflow
+
+    mlflow_tracking_uri = f"file:///{os.getcwd()}/{config['mlflow_tracking_uri']}"
+    print(f"MLflow tracking URI set to: {mlflow_tracking_uri}")
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
+    mlflow.set_experiment(config["mlflow_experiment_name"])
+    mlflow.sklearn.autolog()
+    logger.info("MLflow setup completed successfully")
 
 ## loading data
 logger.info("Loading data")
@@ -132,7 +145,7 @@ forecast_90d, model_info, best_model = forecast_recovered_complaints_90_days(
 )
 
 
-###visualize forecast
+###visualize forecast and save the plot and the forecast data
 logger.info("Visualizing forecast vs historical data")
 result = plot_forecast(
     historical_df=df1_imputed,
@@ -150,38 +163,10 @@ joblib.dump(best_model, "model/best_model.pkl")
 
 
 logger.info("Best model saved successfully")
-
-
-# ### Load env variables
-# import sys
-# from pathlib import Path
-
-# sys.path.append(str(Path(__file__).resolve().parents[1]))
-# from src.utils.env_loader import load_env_from_root
-
-# env_path = load_env_from_root()
-# print(f"Loaded env variables from: {env_path}")
-# ##import os
-# ##os.getenv("YOUR_ENV_VAR")
-
-# ### Example usage of SQLCRUD
-# import sys
-# from pathlib import Path
-
-# sys.path.append(str(Path(__file__).resolve().parents[1]))
-# from src.sqlcrud import SQLServerCRUD
-
-# connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=your_server;DATABASE=your_db;UID=your_user;PWD=your_password"
-# sql_crud = SQLServerCRUD(connection_string)
-# sql_crud.connect()
-# sql_crud.build_query("sql/query.sql", params={"param1": "value1"})
-# df = sql_crud.read_data()
-# print(df)
-# sql_crud.close_connection()
-
+logger.info("Save the forecasted data")
+forecast_90d.to_csv("results/forecast_90d.csv", index=False)
+logger.info("Forecasted data saved successfully")
 
 # uv  add ipykernel
 # uv run -m ipykernel install --user --name=.venv --display-name "Python (forecast_env)"
-
-
 ## add mlflow

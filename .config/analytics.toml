@@ -42,3 +42,6 @@
     ]
 
 "forecast_horizon" = 90
+"mlflowlog" = "no" # "yes"/"no"
+"mlflow_experiment_name" = "phso_complaint_forecast"
+"mlflow_tracking_uri" = 'mlflowresult'
