@@ -67,7 +67,7 @@ logger.info("Libraries loaded successfully")
 
 
 ####mlflow setup
-if mlflowlog:
+if mlflowlog == "yes":
     import os
     import mlflow
 

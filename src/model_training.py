@@ -15,7 +15,7 @@ from src.utils.config_loader import load_config
 
 config = load_config(".config/analytics.toml")
 SEED = config["SEED"]
-imputer_trial_count = config["imputer_trial_count"]
+model_trial_count = config["model_trial_count"]
 model_names = config["model_names"]
 forecast_horizon = config["forecast_horizon"]
 
@@ -102,7 +102,7 @@ def get_model(trial, model_name):
 # -----------------------------
 # Bayesian tuning with Optuna
 # -----------------------------
-def tune_model(X, y, model_name, seed=SEED, n_trials=imputer_trial_count):
+def tune_model(X, y, model_name, seed=SEED, n_trials=model_trial_count):
     tscv = TimeSeriesSplit(n_splits=3)
 
     def objective(trial):
@@ -165,7 +165,7 @@ def forecast_column(
 
     for model_name in models:
         model, score, params = tune_model(
-            X, y, seed=SEED, n_trials=imputer_trial_count, model_name=model_name
+            X, y, seed=SEED, n_trials=model_trial_count, model_name=model_name
         )
 
         if best is None or score < best["score"]:
